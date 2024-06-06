@@ -10,7 +10,7 @@ def off_diag_sum(A):
         vector: Contains the off diagonal sums per row of a matrix
     """
     if A.shape[0] != A.shape[1]:
-        return
+        raise Exception("Matrix must be square!")
     
     A_mod = abs(A)
     
@@ -27,8 +27,8 @@ def eigs(A):
     """
     
     if A.shape[0] != A.shape[1]:
-        print("Error")
-        return
+        raise Exception("Matrix must be square!")
+    
     e = np.linalg.eigvals(A)
     return e.real, e.imag
 
@@ -43,7 +43,6 @@ if __name__ == '__main__':
     cy = a.diagonal().imag
     
     radii = off_diag_sum(a)
-    
     n = cx.shape[0]
     
     fig, ax = plt.subplots()
@@ -67,7 +66,7 @@ if __name__ == '__main__':
     
     
     
-    fig.savefig("test")
+    fig.savefig("3x3_testimg")
     
     
     
