@@ -71,7 +71,7 @@ def brauer(A):
             We obtain the related matrix by doing steps 1-3
             We get our alpha.
             
-            Then, we gotta undo steps 3-1 to recover our a's and b's (incode: written as gamma and beta)
+            Then, we gotta undo steps 3-1 to recover our a's and b's (incode: written as zeta and beta)
             """
             
             # Perform a shift
@@ -106,11 +106,11 @@ def brauer(A):
                     
                     # Intermediate step in undoing 2 'rotation'
                     t = z - alpha
-                    gamma = atan2(t.imag, t.real)
+                    zeta = atan2(t.imag, t.real)
                     
                     if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
                         # In which case, we swap gamma and beta
-                        beta, gamma = gamma, beta
+                        beta, zeta = zeta, beta
                     
                         
                     return np.array([z, beta, gamma])
