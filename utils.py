@@ -34,7 +34,7 @@ def eigs(A):
     return e.real, e.imag
 
 def brauer(A):
-    from math import cos
+    from math import cos, atan2
     if A.shape[0] != A.shape[1]:
         raise Exception("Matrix must be square!")
     
@@ -44,7 +44,7 @@ def brauer(A):
     theta = np.linspace(0, 2*np.pi, N_points)
     N = A.shape[0]
     
-    # TODO: Optimize this shit here
+    # TODO: Optimize this shit here, disgusting disgusting for loops
     # This is going to be slow as fuck for large matrices
     # Potential ideas:
     #   Rewrite this as a library in CPP or some other 'fast' language
@@ -53,8 +53,23 @@ def brauer(A):
     #   What does industry do?
     for i in range(N):
         for j in range(i+1,N):
-            print("ij")
             w = A[i][i]
+            """
+            Alright, you just gotta believe me.  The below shit may appear like black magic sorcery and I 
+            suspect is completely inaccessible to anyone else and will probably be inaccessible to me if I ever
+            decide to come back to this.  So here goes trying to explain this sorcery...
+            
+            Future reference
+            We are solving the following quartic polynomial with two dependent variables, $a and $b:
+            r^4 - 2(a^2)(r^2)(cos 2 theta) - b^4 - a^4
+            
+            a and b are dependent variables, we can thus express one in terms of the other.
+            
+            We define new variable $alpha which makes our life easier somehow, but we gotta recover $a and $b at some point
+            We do this through a series of steps, we solve a closely related matrix
+            
+            We obtain the related matrix by doing steps 1-3
+            """
             
             # Perform a shift
             A1 = A - w*np.eye(N) # 1 - Shift
@@ -82,7 +97,20 @@ def brauer(A):
                     z = w*cos(t) + w*sin(t)*j
                     flag = z.real > 0
                     
+                    # Intermediate step in undoing step 3 'unshift'
+                    t = z + alpha # Intermediate value
+                    beta = atan2(t.imag, t.real) 
                     
+                    # Intermediate step in undoing 2 'rotation'
+                    t = z - alpha
+                    gamma = atan2(t.imag, t.real)
+                    
+                    if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
+                        # In which case, we swap gamma and beta
+                        beta, gamma = gamma, beta
+                    
+                        
+                    return np.array([z, beta, gamma])
                 
                 
     
