@@ -69,6 +69,9 @@ def brauer(A):
             We do this through a series of steps, we solve a closely related matrix
             
             We obtain the related matrix by doing steps 1-3
+            We get our alpha.
+            
+            Then, we gotta undo steps 3-1 to recover our a's and b's (incode: written as gamma and beta)
             """
             
             # Perform a shift
