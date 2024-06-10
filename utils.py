@@ -33,6 +33,20 @@ def eigs(A):
     e = np.linalg.eigvals(A)
     return e.real, e.imag
 
+def brauer_sort(A):
+    """Given a data matrix, A.  Sort the values such that matplotlib can plot them
+
+    Args:
+        A (numpy array 4xN): Data matrix
+    
+    return sorted datamatrix 
+    """
+    
+    # Clean up any NaNs
+    A = A[~np.isnan(a).any(axis=1)]
+    
+    
+
 def brauer(A):
     from math import cos, atan2, atan
     if A.shape[0] != A.shape[1]:
@@ -52,7 +66,7 @@ def brauer(A):
     #   Potential for vectorization (Time to RTFM, fml)***
     #   What does industry do?
     
-    output = np.vstack([np.array([0 + 0j, 0.0, 0.0, 0])])
+    output = np.vstack([np.array([0 + 0j, 0.0, 0.0, 0, 0])])
     print(output)
     for i in range(N):
         for j in range(i+1,N):
@@ -127,7 +141,7 @@ def brauer(A):
                     
                     # This is terrible practice, we will need to improve this later on, but just get it done for now
                     output = np.vstack([output,
-                                        np.array([z, beta, zeta, flag])
+                                        np.array([z, beta, zeta, t,flag])
                                         ])
                 
                 
@@ -166,8 +180,8 @@ if __name__ == '__main__':
     
     r, i = eigs(a)
     ax.plot(r,i, 'ro')
-    
-    print(brauer(a).shape)
+    dmatrix = brauer(a)
+    print(dmatrix[0])
     
     
     
