@@ -43,7 +43,12 @@ def brauer_sort(A):
     """
     
     # Clean up any NaNs
-    A = A[~np.isnan(a).any(axis=1)]
+    A = A[~np.isnan(A['z'])]
+    
+    return (
+        np.sort(A[A['flag']], order='a'),
+        np.sort(A[~A['flag']], order='b')
+    )
     
     
 
@@ -130,14 +135,10 @@ def brauer(A):
                     z = r2*cos(theta) + r2*sin(theta)*j # Get the polar form
                     flag = z.real > 0
                     
-                    # Intermediate step in undoing step 3 'unshift'
-                    t = z + alpha # Intermediate value
-                    a = atan2(t.imag, t.real) 
+                    a = z + alpha
+                    b = z - alpha
                     
-                    # Intermediate step in undoing 2 'rotation'
-                    t = z - alpha
-                    b = atan2(t.imag, t.real)
-                    
+                    # undo steps 3 through 1 to get the value for our original matrix
                     z = np.conj(r1) * (np.conj(r2) * (z + alpha) + r1) 
                     
                     if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
@@ -185,6 +186,8 @@ if __name__ == '__main__':
     print("test")
     print(dmatrix[1])
     
+    x,y = brauer_sort(dmatrix)
+    print(x)    
     
     
     fig.savefig("3x3_testimg")
