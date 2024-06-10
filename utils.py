@@ -65,9 +65,15 @@ def brauer(A):
     #   Find another way to compute the boundary, (research alternative ways to do this)
     #   Potential for vectorization (Time to RTFM, fml)***
     #   What does industry do?
-    
-    output = np.vstack([np.array([0 + 0j, 0.0, 0.0, 0, 0])])
-    print(output)
+    dtype = [
+        ('z', np.cfloat), # Our point along the boundary of the oval
+        ('a', float),  # Our 'a' value
+        ('b', float),  # Our 'b' value
+        ('theta', float), # Our paramaterized variable
+        ('flag', bool)    # Mirrored?
+    ]
+    output = []
+
     for i in range(N):
         for j in range(i+1,N):
             """
@@ -95,7 +101,6 @@ def brauer(A):
                 r1_ang = 0
             
             
-            # Perform a shift
             A1 = A - r1*np.eye(N) # 1 - Shift, make A[i][i] zero
             
             r2 = -A1[j][j] # The unmodified complex form
@@ -127,26 +132,22 @@ def brauer(A):
                     
                     # Intermediate step in undoing step 3 'unshift'
                     t = z + alpha # Intermediate value
-                    beta = atan2(t.imag, t.real) 
+                    a = atan2(t.imag, t.real) 
                     
                     # Intermediate step in undoing 2 'rotation'
                     t = z - alpha
-                    zeta = atan2(t.imag, t.real)
+                    b = atan2(t.imag, t.real)
                     
                     z = np.conj(r1) * (np.conj(r2) * (z + alpha) + r1) 
                     
                     if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
                         # In which case, we swap gamma and beta
-                        beta, zeta = zeta, beta
+                        a, b = b, a
                     
-                    # This is terrible practice, we will need to improve this later on, but just get it done for now
-                    output = np.vstack([output,
-                                        np.array([z, beta, zeta, theta,flag])
-                                        ])
-                
+                    output.append((z, a, b, theta,flag))
                 
     
-    return output[1:] # removing the initial seed value
+    return np.array(output, dtype=dtype)
     
     
 
@@ -181,8 +182,8 @@ if __name__ == '__main__':
     r, i = eigs(a)
     ax.plot(r,i, 'ro')
     dmatrix = brauer(a)
-    print(dmatrix[0])
-    
+    print("test")
+    print(dmatrix[1])
     
     
     
