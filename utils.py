@@ -34,7 +34,7 @@ def eigs(A):
     return e.real, e.imag
 
 def brauer(A):
-    from math import cos, atan2
+    from math import cos, atan2, atan
     if A.shape[0] != A.shape[1]:
         raise Exception("Matrix must be square!")
     
@@ -53,7 +53,6 @@ def brauer(A):
     #   What does industry do?
     for i in range(N):
         for j in range(i+1,N):
-            w = A[i][i]
             """
             Alright, you just gotta believe me.  The below shit may appear like black magic sorcery and I 
             suspect is completely inaccessible to anyone else and will probably be inaccessible to me if I ever
@@ -73,12 +72,22 @@ def brauer(A):
             
             Then, we gotta undo steps 3-1 to recover our a's and b's (incode: written as zeta and beta)
             """
+            r1 = A[i][i] # Diagonal element; the unmodified complex form
+            r1_ang = -atan(r1.imag / r1.real) # the angle form of r1
+            if np.isnan(r1_ang):
+                r1_ang = 0
+            
             
             # Perform a shift
-            A1 = A - w*np.eye(N) # 1 - Shift
-            gamma = -A1[j][j]
+            A1 = A - r1*np.eye(N) # 1 - Shift, make A[i][i] zero
             
-            A2 = gamma*np.eye(N)*A1 # 2 - Rotate the diagonal A[j,j] entry towards the real line
+            r2 = -A1[j][j] # The unmodified complex form
+            r2_ang = -atan(r2.imag / r2.real) # the angle of r2
+            
+            if np.isnan(r2_ang):
+                r2_ang = 0
+            
+            A2 = r2*np.eye(N)*A1 # 2 - Rotate the diagonal A[j,j] entry towards the real line
             alpha = A2[j][j]/2
             A3 = A2 - alpha*np.eye(N) # 3 - Shift again
             
@@ -97,7 +106,7 @@ def brauer(A):
                 real_roots = soln[soln.imag < tol] # Retrieve real roots only! 
                 
                 for r in real_roots:
-                    z = w*cos(t) + w*sin(t)*j
+                    z = r2*cos(t) + r2*sin(t)*j # Get the polar form
                     flag = z.real > 0
                     
                     # Intermediate step in undoing step 3 'unshift'
@@ -108,12 +117,15 @@ def brauer(A):
                     t = z - alpha
                     zeta = atan2(t.imag, t.real)
                     
+                    # 
+                    z = np.conj(r1_ang) * (np.conj(r2) * (z + alpha) + r1) 
+                    
                     if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
                         # In which case, we swap gamma and beta
                         beta, zeta = zeta, beta
                     
                         
-                    return np.array([z, beta, gamma])
+                    return np.array([z, beta, zeta, flag])
                 
                 
     
