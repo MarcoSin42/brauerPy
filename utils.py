@@ -51,6 +51,9 @@ def brauer(A):
     #   Find another way to compute the boundary, (research alternative ways to do this)
     #   Potential for vectorization (Time to RTFM, fml)***
     #   What does industry do?
+    
+    output = np.vstack([np.array([0 + 0j, 0.0, 0.0, 0])])
+    print(output)
     for i in range(N):
         for j in range(i+1,N):
             """
@@ -104,7 +107,6 @@ def brauer(A):
                 soln = P.roots() # Solutions to our rotated and shifted matrix
                 
                 real_roots = soln[soln.imag < tol] # Retrieve real roots only! 
-                
                 for r in real_roots:
                     z = r2*cos(t) + r2*sin(t)*j # Get the polar form
                     flag = z.real > 0
@@ -117,19 +119,20 @@ def brauer(A):
                     t = z - alpha
                     zeta = atan2(t.imag, t.real)
                     
-                    # 
-                    z = np.conj(r1_ang) * (np.conj(r2) * (z + alpha) + r1) 
+                    z = np.conj(r1) * (np.conj(r2) * (z + alpha) + r1) 
                     
                     if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
                         # In which case, we swap gamma and beta
                         beta, zeta = zeta, beta
                     
-                        
-                    return np.array([z, beta, zeta, flag])
+                    # This is terrible practice, we will need to improve this later on, but just get it done for now
+                    output = np.vstack([output,
+                                        np.array([z, beta, zeta, flag])
+                                        ])
                 
                 
     
-    return None
+    return output[1:] # removing the initial seed value
     
     
 
@@ -164,7 +167,7 @@ if __name__ == '__main__':
     r, i = eigs(a)
     ax.plot(r,i, 'ro')
     
-    brauer(a)
+    print(brauer(a).shape)
     
     
     
