@@ -55,7 +55,7 @@ def brauer(A):
     
     N_points = 1_000
     Rs = off_diag_sum(A)
-    theta = np.linspace(0, 2*np.pi, N_points)
+    thetas = np.linspace(0, 2*np.pi, N_points)
     N = A.shape[0]
     
     # TODO: Optimize this shit here, disgusting disgusting for loops
@@ -108,11 +108,11 @@ def brauer(A):
             alpha = A2[j][j]/2
             A3 = A2 - alpha*np.eye(N) # 3 - Shift again
             
-            for t in theta:
+            for theta in thetas:
                 P = np.polynomial.Polynomial((
                     alpha**4 - (Rs[i]*Rs[j])**2, # Constant coef
                     0, # x
-                    -2*alpha**2*cos(2*t), # x^2
+                    -2*alpha**2*cos(2*theta), # x^2
                     0, # x^3
                     1  # x^4
                 ))
@@ -122,7 +122,7 @@ def brauer(A):
                 
                 real_roots = soln[soln.imag < tol] # Retrieve real roots only! 
                 for r in real_roots:
-                    z = r2*cos(t) + r2*sin(t)*j # Get the polar form
+                    z = r2*cos(theta) + r2*sin(theta)*j # Get the polar form
                     flag = z.real > 0
                     
                     # Intermediate step in undoing step 3 'unshift'
@@ -141,7 +141,7 @@ def brauer(A):
                     
                     # This is terrible practice, we will need to improve this later on, but just get it done for now
                     output = np.vstack([output,
-                                        np.array([z, beta, zeta, t,flag])
+                                        np.array([z, beta, zeta, theta,flag])
                                         ])
                 
                 
