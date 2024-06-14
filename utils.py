@@ -1,4 +1,5 @@
 import numpy as np
+from math import sin,cos
 
 def off_diag_sum(A):
     """ Computes the sum of the off diagonal entries per row and returns it in the form of a vector
@@ -32,6 +33,125 @@ def eigs(A):
     e = np.linalg.eigvals(A)
     return e.real, e.imag
 
+def brauer_sort(A):
+    """Given a data matrix, A.  Sort the values such that matplotlib can plot them
+
+    Args:
+        A (numpy array 4xN): Data matrix
+    
+    return sorted datamatrix 
+    """
+    
+    # Clean up any NaNs
+    A = A[~np.isnan(A['z'])]
+    
+    return (
+        np.sort(A[A['flag']], order='a'),
+        np.sort(A[~A['flag']], order='b')
+    )
+    
+    
+
+def brauer(A):
+    from math import cos, atan2, atan
+    if A.shape[0] != A.shape[1]:
+        raise Exception("Matrix must be square!")
+    
+    
+    N_points = 1_000
+    Rs = off_diag_sum(A)
+    thetas = np.linspace(0, 2*np.pi, N_points)
+    N = A.shape[0]
+    
+    # TODO: Optimize this shit here, disgusting disgusting for loops
+    # This is going to be slow as fuck for large matrices
+    # Potential ideas:
+    #   Rewrite this as a library in CPP or some other 'fast' language
+    #   Find another way to compute the boundary, (research alternative ways to do this)
+    #   Potential for vectorization (Time to RTFM, fml)***
+    #   What does industry do?
+    dtype = [
+        ('z', np.cfloat), # Our point along the boundary of the oval
+        ('a', float),  # Our 'a' value
+        ('b', float),  # Our 'b' value
+        ('theta', float), # Our paramaterized variable
+        ('flag', bool)    # Mirrored?
+    ]
+    output = []
+
+    for i in range(N):
+        for j in range(i+1,N):
+            """
+            Alright, you just gotta believe me.  The below shit may appear like black magic sorcery and I 
+            suspect is completely inaccessible to anyone else and will probably be inaccessible to me if I ever
+            decide to come back to this.  So here goes trying to explain this sorcery...
+            
+            Future reference
+            We are solving the following quartic polynomial with two dependent variables, $a and $b:
+            r^4 - 2(a^2)(r^2)(cos 2 theta) - b^4 - a^4
+            
+            a and b are dependent variables, we can thus express one in terms of the other.
+            
+            We define new variable $alpha which makes our life easier somehow, but we gotta recover $a and $b at some point
+            We do this through a series of steps, we solve a closely related matrix
+            
+            We obtain the related matrix by doing steps 1-3
+            We get our alpha.
+            
+            Then, we gotta undo steps 3-1 to recover our a's and b's (incode: written as zeta and beta)
+            """
+            r1 = A[i][i] # Diagonal element; the unmodified complex form
+            r1_ang = -atan(r1.imag / r1.real) # the angle form of r1
+            if np.isnan(r1_ang):
+                r1_ang = 0
+            
+            
+            A1 = A - r1*np.eye(N) # 1 - Shift, make A[i][i] zero
+            
+            r2 = -A1[j][j] # The unmodified complex form
+            r2_ang = -atan(r2.imag / r2.real) # the angle of r2
+            
+            if np.isnan(r2_ang):
+                r2_ang = 0
+            
+            A2 = r2*np.eye(N)*A1 # 2 - Rotate the diagonal A[j,j] entry towards the real line
+            alpha = A2[j][j]/2
+            A3 = A2 - alpha*np.eye(N) # 3 - Shift again
+            
+            for theta in thetas:
+                P = np.polynomial.Polynomial((
+                    alpha**4 - (Rs[i]*Rs[j])**2, # Constant coef
+                    0, # x
+                    -2*alpha**2*cos(2*theta), # x^2
+                    0, # x^3
+                    1  # x^4
+                ))
+                
+                tol = 0.0001 
+                soln = P.roots() # Solutions to our rotated and shifted matrix
+                
+                real_roots = soln[soln.imag < tol] # Retrieve real roots only! 
+                for r in real_roots:
+                    z = r2*cos(theta) + r2*sin(theta)*j # Get the polar form
+                    flag = z.real > 0
+                    
+                    a = z + alpha
+                    b = z - alpha
+                    
+                    # undo steps 3 through 1 to get the value for our original matrix
+                    z = np.conj(r1) * (np.conj(r2) * (z + alpha) + r1) 
+                    
+                    if alpha > 0: # Implies some sort of mirroring (flipped along some axis)
+                        # In which case, we swap gamma and beta
+                        a, b = b, a
+                    
+                    output.append((z, a, b, theta,flag))
+                
+    
+    return np.array(output, dtype=dtype)
+    
+    
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     
@@ -62,8 +182,12 @@ if __name__ == '__main__':
     
     r, i = eigs(a)
     ax.plot(r,i, 'ro')
+    dmatrix = brauer(a)
+    print("test")
+    print(dmatrix[1])
     
-    
+    x,y = brauer_sort(dmatrix)
+    print(x)    
     
     
     fig.savefig("3x3_testimg")
